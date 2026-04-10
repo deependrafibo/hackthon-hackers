@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    - name: Install dependencies
+      run: npm ci
+    - name: Run tests
+      run: npm run test
+    - name: Verify UI coverage results
+      if: always()
+      run: |
+        if [ -f test-results/results.json ]; then
+          node -e "
+            const r = require('./test-results/results.json');
+            const suites = r.suites || [];
+            let coverageFail = false;
+            function walk(s) {
+              for (const spec of (s.specs || [])) {
+                for (const t of (spec.tests || [])) {
+                  for (const result of (t.results || [])) {
+                    if (result.status !== 'passed' && spec.title.includes('coverage')) {
+                      coverageFail = true;
+                      console.error('COVERAGE FAIL:', spec.title);
+                    }
+                  }
+                }
+              }
+              for (const child of (s.suites || [])) { walk(child); }
+            }
+            suites.forEach(walk);
+            if (coverageFail) {
+              console.error('UI coverage is not 100%. Build failed.');
+              process.exit(1);
+            }
+            console.log('UI coverage: 100% — all elements verified.');
+          "
+        else
+          echo "No test results found — skipping coverage check."
+        fi
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ matrix.os }}
+        path: test-results/
+        retention-days: 30

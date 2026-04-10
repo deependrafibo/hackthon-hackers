@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test:*)",
+      "Bash(node playwright-cli.js open https://playwright.dev/ --persistent)",
+      "Bash(node playwright-cli.js snapshot)",
+      "Bash(node playwright-cli.js delete-data)",
+      "Bash(npx playwright:*)",
+      "Bash(node playwright-cli.js kill-all)",
+      "Bash(node playwright-cli.js list)",
+      "Read(//c/Users/AMAN/AppData/Local/ms-playwright/daemon/**)",
+      "Bash(powershell -Command \"Get-Process chrome* | Select-Object Id, Name, MainWindowTitle\")",
+      "Bash(powershell -Command \"Stop-Process -Id 28292 -Force\")",
+      "Bash(powershell -Command ':*)",
+      "Bash(powershell -Command \"Stop-Process -Id 2692,5836,13844,22004,24232,31372,35100 -Force -ErrorAction SilentlyContinue\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\AMAN\\AppData\\Local\\ms-playwright\\daemon\\8cfe28a18a3933f4\\ud-default-undefined"
+    ]
+  }
+}
