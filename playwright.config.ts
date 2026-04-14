@@ -15,24 +15,55 @@
  */
 
 import { defineConfig, devices } from '@playwright/test';
+import path from 'path';
+import dotenv from 'dotenv';
+
+// Load .env from project root so TEST_EMAIL / TEST_PASSWORD are available
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const AUTH_FILE = path.join(__dirname, '.auth/session.json');
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   workers: 1,
+  timeout: 90000,
   reporter: [
     ['list'],
     ['json', { outputFile: 'test-results/results.json' }],
   ],
-  /* Fail fast on coverage failures in CI */
   maxFailures: process.env.CI ? 1 : 0,
   use: {
     headless: true,
     screenshot: 'on',
     video: 'off',
+    navigationTimeout: 60000,
+    actionTimeout: 15000,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // 1. Run login once and save the session
+    {
+      name: 'setup',
+      testMatch: '**/auth.setup.ts',
+    },
+
+    // 2. Public pages (login / signup) — no auth needed
+    {
+      name: 'public',
+      testMatch: '**/etrade.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
+    // 3. Authenticated pages — depends on setup finishing first
+    {
+      name: 'authenticated',
+      testMatch: '**/etrade-authenticated.spec.ts',
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: AUTH_FILE,   // every test starts already logged in
+      },
+    },
   ],
 });
