@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // storageState (saved session) is injected by playwright.config.ts — every
 // test in this file starts already logged in.
 
-const BASE_URL = process.env.BASE_URL || 'https://etrade-staging.blockpeer.finance';
+const TEST_GEN_BASE_URL = process.env.TEST_GEN_BASE_URL || 'https://etrade-staging.blockpeer.finance';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD  /
@@ -11,7 +11,7 @@ const BASE_URL = process.env.BASE_URL || 'https://etrade-staging.blockpeer.finan
 
 test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(TEST_GEN_BASE_URL);
     await page.waitForLoadState('networkidle');
   });
 
@@ -42,7 +42,7 @@ test.describe('Dashboard', () => {
 
 test.describe('Sidebar navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(BASE_URL);
+    await page.goto(TEST_GEN_BASE_URL);
     await page.waitForLoadState('networkidle');
   });
 
@@ -104,7 +104,7 @@ test.describe('Sidebar link navigation', () => {
 
   for (const target of navTargets) {
     test(`clicking "${target.name}" navigates to ${target.url}`, async ({ page }) => {
-      await page.goto(BASE_URL);
+      await page.goto(TEST_GEN_BASE_URL);
       await page.waitForLoadState('networkidle');
       await page.getByRole('link', { name: target.name }).click();
       await expect(page).toHaveURL(new RegExp(target.url));
@@ -118,7 +118,7 @@ test.describe('Sidebar link navigation', () => {
 
 test.describe('Wallet page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/wallet`);
+    await page.goto(`${TEST_GEN_BASE_URL}/wallet`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -141,7 +141,7 @@ test.describe('Wallet page', () => {
 
 test.describe('Bank ePresentations page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/bank-e-presentations`);
+    await page.goto(`${TEST_GEN_BASE_URL}/bank-e-presentations`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -160,7 +160,7 @@ test.describe('Bank ePresentations page', () => {
 
 test.describe('Bills of Exchange page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/bills-of-exchange`);
+    await page.goto(`${TEST_GEN_BASE_URL}/bills-of-exchange`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -183,7 +183,7 @@ test.describe('Bills of Exchange page', () => {
 
 test.describe('Contacts page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/contacts`);
+    await page.goto(`${TEST_GEN_BASE_URL}/contacts`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -230,7 +230,7 @@ test.describe('Contacts page', () => {
 
 test.describe('Manage Teams page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/teams`);
+    await page.goto(`${TEST_GEN_BASE_URL}/teams`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -264,7 +264,7 @@ test.describe('Manage Teams page', () => {
 
 test.describe('Verify and Endorse Document page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/verify-and-endorse-document`);
+    await page.goto(`${TEST_GEN_BASE_URL}/verify-and-endorse-document`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -290,7 +290,7 @@ test.describe('Verify and Endorse Document page', () => {
 
 test.describe('Settings — Company Settings', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/settings`);
+    await page.goto(`${TEST_GEN_BASE_URL}/settings`);
     await page.waitForLoadState('networkidle');
   });
 
@@ -340,7 +340,7 @@ test.describe('Settings — Company Settings', () => {
 
 test.describe('Settings — Email Notifications', () => {
   test('navigating to Email Notifications tab works', async ({ page }) => {
-    await page.goto(`${BASE_URL}/settings`);
+    await page.goto(`${TEST_GEN_BASE_URL}/settings`);
     await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'Email Notifications' }).click();
     await expect(page).toHaveURL(/\/settings\/email-settings/);
@@ -350,7 +350,7 @@ test.describe('Settings — Email Notifications', () => {
 
 test.describe('Settings — Email Configuration', () => {
   test('navigating to Email Configuration tab works', async ({ page }) => {
-    await page.goto(`${BASE_URL}/settings`);
+    await page.goto(`${TEST_GEN_BASE_URL}/settings`);
     await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'Email Configuration' }).click();
     await expect(page).toHaveURL(/\/settings\/email-configuration/);
@@ -364,12 +364,12 @@ test.describe('Settings — Email Configuration', () => {
 
 test.describe('Terms of Service page', () => {
   test('page loads without errors', async ({ page }) => {
-    const response = await page.goto(`${BASE_URL}/terms`);
+    const response = await page.goto(`${TEST_GEN_BASE_URL}/terms`);
     expect(response?.status()).toBe(200);
   });
 
   test('page title is "Blockpeer Finance"', async ({ page }) => {
-    await page.goto(`${BASE_URL}/terms`);
+    await page.goto(`${TEST_GEN_BASE_URL}/terms`);
     await expect(page).toHaveTitle('Blockpeer Finance');
   });
 });
@@ -380,12 +380,12 @@ test.describe('Terms of Service page', () => {
 
 test.describe('Privacy Policy page', () => {
   test('page loads without errors', async ({ page }) => {
-    const response = await page.goto(`${BASE_URL}/privacy`);
+    const response = await page.goto(`${TEST_GEN_BASE_URL}/privacy`);
     expect(response?.status()).toBe(200);
   });
 
   test('page title is "Blockpeer Finance"', async ({ page }) => {
-    await page.goto(`${BASE_URL}/privacy`);
+    await page.goto(`${TEST_GEN_BASE_URL}/privacy`);
     await expect(page).toHaveTitle('Blockpeer Finance');
   });
 });
@@ -396,7 +396,7 @@ test.describe('Privacy Policy page', () => {
 
 test.describe('Unknown routes', () => {
   test('visiting a non-existent page does not crash', async ({ page }) => {
-    const response = await page.goto(`${BASE_URL}/this-page-does-not-exist`);
+    const response = await page.goto(`${TEST_GEN_BASE_URL}/this-page-does-not-exist`);
     // Accept 200 (SPA catch-all) or 404
     expect([200, 404]).toContain(response?.status());
   });

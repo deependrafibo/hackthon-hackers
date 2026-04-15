@@ -3,18 +3,18 @@ import path from 'path';
 
 export const AUTH_FILE = path.join(__dirname, '../.auth/session.json');
 
-const BASE_URL = process.env.BASE_URL || 'https://etrade-staging.blockpeer.finance';
-const EMAIL    = process.env.TEST_EMAIL    || '';
-const PASSWORD = process.env.TEST_PASSWORD || '';
+const TEST_GEN_BASE_URL = process.env.TEST_GEN_BASE_URL || 'https://etrade-staging.blockpeer.finance';
+const EMAIL    = process.env.TEST_GEN_EMAIL    || '';
+const PASSWORD = process.env.TEST_GEN_PASSWORD || '';
 
 setup('authenticate', async ({ page }) => {
   if (!EMAIL || !PASSWORD) {
     throw new Error(
-      'TEST_EMAIL and TEST_PASSWORD must be set in your .env file before running authenticated tests.',
+      'TEST_GEN_EMAIL and TEST_GEN_PASSWORD must be set in your .env file before running authenticated tests.',
     );
   }
 
-  await page.goto(`${BASE_URL}/auth/signin`);
+  await page.goto(`${TEST_GEN_BASE_URL}/auth/signin`);
 
   await page.getByPlaceholder('m@example.com').fill(EMAIL);
   await page.getByPlaceholder('**********').fill(PASSWORD);

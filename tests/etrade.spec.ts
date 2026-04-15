@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'https://etrade-staging.blockpeer.finance';
+const TEST_GEN_BASE_URL = 'https://etrade-staging.blockpeer.finance';
 
 // ─── Auth / Login Page ───────────────────────────────────────────────────────
 
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/auth/signin`);
+    await page.goto(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('page title is "Blockpeer Finance"', async ({ page }) => {
@@ -14,8 +14,8 @@ test.describe('Login Page', () => {
   });
 
   test('root URL redirects to /auth/signin', async ({ page }) => {
-    await page.goto(BASE_URL);
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await page.goto(TEST_GEN_BASE_URL);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('login heading is visible', async ({ page }) => {
@@ -74,24 +74,24 @@ test.describe('Login Page', () => {
   test('Sign In with empty form shows native/HTML5 validation (no navigation)', async ({ page }) => {
     await page.getByRole('button', { name: 'Sign In' }).click();
     // stays on sign-in page – no redirect
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('Sign In with invalid email stays on page', async ({ page }) => {
     await page.getByPlaceholder('m@example.com').fill('not-an-email');
     await page.getByPlaceholder('**********').fill('password123');
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('"Forgot your password?" link navigates to forgot-password page', async ({ page }) => {
     await page.getByRole('link', { name: /Forgot your password/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/forgot-password`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/forgot-password`);
   });
 
   test('"Create Account" link navigates to signup page', async ({ page }) => {
     await page.getByRole('link', { name: 'Create Account' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signup`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signup`);
   });
 });
 
@@ -99,7 +99,7 @@ test.describe('Login Page', () => {
 
 test.describe('Sign Up Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/auth/signup`);
+    await page.goto(`${TEST_GEN_BASE_URL}/auth/signup`);
   });
 
   test('page title is "Blockpeer Finance"', async ({ page }) => {
@@ -142,12 +142,12 @@ test.describe('Sign Up Page', () => {
 
   test('"Sign in" link navigates back to signin page', async ({ page }) => {
     await page.getByRole('link', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('empty form submission stays on signup page', async ({ page }) => {
     await page.getByRole('button', { name: 'Create Account' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signup`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signup`);
   });
 
   test('password visibility toggle works on signup', async ({ page }) => {
@@ -171,7 +171,7 @@ test.describe('Sign Up Page', () => {
 
 test.describe('Forgot Password Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}/auth/forgot-password`);
+    await page.goto(`${TEST_GEN_BASE_URL}/auth/forgot-password`);
   });
 
   test('page title is "Blockpeer Finance"', async ({ page }) => {
@@ -198,12 +198,12 @@ test.describe('Forgot Password Page', () => {
 
   test('empty form submission stays on forgot-password page', async ({ page }) => {
     await page.getByRole('button', { name: /Send Reset Instructions/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/forgot-password`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/forgot-password`);
   });
 
   test('"Sign in" link navigates back to signin page', async ({ page }) => {
     await page.getByRole('link', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('email input accepts valid email and submits', async ({ page }) => {
@@ -218,20 +218,20 @@ test.describe('Forgot Password Page', () => {
 
 test.describe('Cross-page navigation', () => {
   test('logo on login page goes back to root (which redirects to signin)', async ({ page }) => {
-    await page.goto(`${BASE_URL}/auth/signin`);
+    await page.goto(`${TEST_GEN_BASE_URL}/auth/signin`);
     await page.getByRole('link', { name: /BlockPeer Logo/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('logo on signup page goes back to root', async ({ page }) => {
-    await page.goto(`${BASE_URL}/auth/signup`);
+    await page.goto(`${TEST_GEN_BASE_URL}/auth/signup`);
     await page.getByRole('link', { name: /BlockPeer Logo/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 
   test('logo on forgot-password page goes back to root', async ({ page }) => {
-    await page.goto(`${BASE_URL}/auth/forgot-password`);
+    await page.goto(`${TEST_GEN_BASE_URL}/auth/forgot-password`);
     await page.getByRole('link', { name: /BlockPeer Logo/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
+    await expect(page).toHaveURL(`${TEST_GEN_BASE_URL}/auth/signin`);
   });
 });

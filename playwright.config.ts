@@ -18,7 +18,7 @@ import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 import dotenv from 'dotenv';
 
-// Load .env from project root so TEST_EMAIL / TEST_PASSWORD are available
+// Load .env from project root so TEST_GEN_EMAIL / TEST_GEN_PASSWORD are available
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const AUTH_FILE = path.join(__dirname, '.auth/session.json');
