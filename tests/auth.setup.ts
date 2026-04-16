@@ -1,4 +1,4 @@
-import { test as setup, expect } from '@playwright/test';
+import { test as setup, expect } from './base.fixture';
 import path from 'path';
 
 export const AUTH_FILE = path.join(__dirname, '../.auth/session.json');

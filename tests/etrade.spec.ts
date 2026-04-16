@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './base.fixture';
 
 const BASE_URL = 'https://etrade-staging.blockpeer.finance';
 

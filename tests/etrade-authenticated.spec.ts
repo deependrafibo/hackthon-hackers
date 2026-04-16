@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './base.fixture';
 
 // storageState (saved session) is injected by playwright.config.ts — every
 // test in this file starts already logged in.
@@ -9,7 +9,7 @@ const BASE_URL = process.env.BASE_URL || 'https://etrade-staging.blockpeer.finan
 // DASHBOARD  /
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Dashboard', () => {
+test.describe('Dashboard', { tag: '@dashboard' }, () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');

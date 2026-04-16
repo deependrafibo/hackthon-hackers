@@ -23,6 +23,10 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const AUTH_FILE = path.join(__dirname, '.auth/session.json');
 
+/** Safe directory segment from WEBSITE_NAME (e.g. Etrade → test-results/Etrade/...) */
+const websiteSegment = String(process.env.WEBSITE_NAME || 'site').replace(/[^a-zA-Z0-9_-]+/g, '_');
+const artifactRoot = path.join(__dirname, 'test-results', websiteSegment);
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
@@ -31,12 +35,12 @@ export default defineConfig({
   timeout: 90000,
   reporter: [
     ['list'],
-    ['json', { outputFile: 'test-results/results.json' }],
+    ['json', { outputFile: path.join(artifactRoot, 'results.json') }],
   ],
   maxFailures: process.env.CI ? 1 : 0,
   use: {
     headless: true,
-    screenshot: 'on',
+    screenshot: 'off', // handled by base.fixture.ts afterEach hook
     video: 'off',
     navigationTimeout: 60000,
     actionTimeout: 15000,
@@ -46,23 +50,40 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: '**/auth.setup.ts',
+      outputDir: path.join(artifactRoot, 'setup'),
     },
 
     // 2. Public pages (login / signup) — no auth needed
     {
       name: 'public',
       testMatch: '**/etrade.spec.ts',
+      outputDir: path.join(artifactRoot, 'public'),
       use: { ...devices['Desktop Chrome'] },
     },
 
-    // 3. Authenticated pages — depends on setup finishing first
+    // 3a. Dashboard-only (screenshots under …/dashboard/)
+    {
+      name: 'dashboard',
+      testMatch: '**/etrade-authenticated.spec.ts',
+      grep: /@dashboard/,
+      dependencies: ['setup'],
+      outputDir: path.join(artifactRoot, 'dashboard'),
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: AUTH_FILE,
+      },
+    },
+
+    // 3b. Other authenticated flows (screenshots under …/authenticated/)
     {
       name: 'authenticated',
       testMatch: '**/etrade-authenticated.spec.ts',
+      grepInvert: /@dashboard/,
       dependencies: ['setup'],
+      outputDir: path.join(artifactRoot, 'authenticated'),
       use: {
         ...devices['Desktop Chrome'],
-        storageState: AUTH_FILE,   // every test starts already logged in
+        storageState: AUTH_FILE, // every test starts already logged in
       },
     },
   ],
