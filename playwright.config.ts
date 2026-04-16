@@ -21,48 +21,108 @@ import dotenv from 'dotenv';
 // Load .env from project root so TEST_EMAIL / TEST_PASSWORD are available
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const AUTH_FILE = path.join(__dirname, '.auth/session.json');
+const BLOCKPEER_AUTH_FILE = path.join(__dirname, '.auth/blockpeer-session.json');
+const CRICKBOX_AUTH_FILE = path.join(__dirname, '.auth/crickbox-session.json');
+const BASE_URL = process.env.BASE_URL || process.env.BLOCKPEER_BASE_URL || 'https://staging-react.blockpeer.finance';
+
+function resolveRunId(): string {
+  if (process.env.TEST_RUN_ID?.trim())
+    return process.env.TEST_RUN_ID.trim();
+  return `run-${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}`;
+}
+
+function normalizeAuthorizationHeader(rawToken: string): string {
+  const token = rawToken.trim();
+  if (!token)
+    return '';
+  return /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`;
+}
+
+const runId = resolveRunId();
+const runFolder = path.join('test-results', runId);
+const jsonOutputFile = path.join(runFolder, 'results.json');
+const rawHeader = process.env.AUTHORIZATION_HEADER || process.env.API_TOKEN || '';
+const authorizationHeader = rawHeader ? normalizeAuthorizationHeader(rawHeader) : '';
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
+  globalSetup: require.resolve('./global.setup'),
   forbidOnly: !!process.env.CI,
   workers: 1,
   timeout: 90000,
   reporter: [
     ['list'],
-    ['json', { outputFile: 'test-results/results.json' }],
+    ['json', { outputFile: jsonOutputFile }],
+    [path.resolve(__dirname, './reporters/priorityResultReporter.ts')],
   ],
   maxFailures: process.env.CI ? 1 : 0,
   use: {
+    baseURL: BASE_URL,
+    channel: 'chrome',
     headless: true,
     screenshot: 'on',
+    trace: 'retain-on-failure',
     video: 'off',
     navigationTimeout: 60000,
     actionTimeout: 15000,
+    extraHTTPHeaders: authorizationHeader ? { Authorization: authorizationHeader } : undefined,
   },
+  outputDir: path.join(runFolder, 'artifacts'),
   projects: [
-    // 1. Run login once and save the session
+    // Blockpeer (existing suite)
     {
-      name: 'setup',
-      testMatch: '**/auth.setup.ts',
-    },
-
-    // 2. Public pages (login / signup) — no auth needed
-    {
-      name: 'public',
-      testMatch: '**/etrade.spec.ts',
-      use: { ...devices['Desktop Chrome'] },
-    },
-
-    // 3. Authenticated pages — depends on setup finishing first
-    {
-      name: 'authenticated',
-      testMatch: '**/etrade-authenticated.spec.ts',
-      dependencies: ['setup'],
+      name: 'blockpeer-setup',
+      testMatch: '**/blockpeer/auth.setup.ts',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: AUTH_FILE,   // every test starts already logged in
+        baseURL: process.env.BLOCKPEER_BASE_URL || BASE_URL,
+      },
+    },
+    {
+      name: 'blockpeer-public',
+      testMatch: '**/blockpeer/priority-*/public/**/*.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.BLOCKPEER_BASE_URL || BASE_URL,
+      },
+    },
+    {
+      name: 'blockpeer-authenticated',
+      testMatch: '**/blockpeer/priority-*/authenticated/**/*.spec.ts',
+      dependencies: ['blockpeer-setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.BLOCKPEER_BASE_URL || BASE_URL,
+        storageState: BLOCKPEER_AUTH_FILE,   // every test starts already logged in
+      },
+    },
+    // Crickbox (new suite)
+    {
+      name: 'crickbox-setup',
+      testMatch: '**/crickbox/auth.setup.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/',
+      },
+    },
+    {
+      name: 'crickbox-public',
+      testMatch: '**/crickbox/**/*.spec.ts',
+      testIgnore: '**/crickbox/authenticated/**/*.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/',
+      },
+    },
+    {
+      name: 'crickbox-authenticated',
+      testMatch: '**/crickbox/authenticated/**/*.spec.ts',
+      dependencies: ['crickbox-setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/',
+        storageState: CRICKBOX_AUTH_FILE,
       },
     },
   ],
