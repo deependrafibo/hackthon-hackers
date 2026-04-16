@@ -1,0 +1,32 @@
+# graphify ignore — keeps the knowledge graph focused on test logic only
+# Same syntax as .gitignore
+
+# Dependencies — too large, not authored code
+node_modules/
+
+# Generated test artifacts
+test-results/
+.playwright-cli/
+.auth/
+
+# Playwright browser binaries
+.local-chromium/
+.local-firefox/
+
+# graphify's own output (avoid circular self-reference)
+graphify-out/
+
+# Environment / secrets
+.env
+.env.*
+
+# IDE and OS noise
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+
+# Lock files — pure dependency resolution, no graph value
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

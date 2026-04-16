@@ -55,6 +55,13 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
 
+    // 4. CricBox — public E2E tests for crick-box07.vercel.app
+    {
+      name: 'crickbox',
+      testMatch: '**/crickbox.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+    },
+
     // 3. Authenticated pages — depends on setup finishing first
     {
       name: 'authenticated',

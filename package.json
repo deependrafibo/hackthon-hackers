@@ -15,7 +15,12 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:public": "playwright test --project=public",
+    "test:auth": "playwright test --project=authenticated",
+    "graph": "node scripts/graph.js",
+    "graph:update": "node scripts/graph.js --update",
+    "graph:report": "node scripts/graph.js --no-viz"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
