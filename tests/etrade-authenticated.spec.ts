@@ -3,13 +3,13 @@ import { test, expect } from '@playwright/test';
 // storageState (saved session) is injected by playwright.config.ts — every
 // test in this file starts already logged in.
 
-const BASE_URL = process.env.BASE_URL || 'https://etrade-staging.blockpeer.finance';
+const BASE_URL = process.env.BASE_URL || process.env.BLOCKPEER_BASE_URL || 'https://staging-react.blockpeer.finance';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DASHBOARD  /
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Dashboard', () => {
+test.describe('Dashboard @api:dashboard @priority:high', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
@@ -40,7 +40,7 @@ test.describe('Dashboard', () => {
 // SIDEBAR NAVIGATION
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Sidebar navigation', () => {
+test.describe('Sidebar navigation @api:navigation @priority:high', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(BASE_URL);
     await page.waitForLoadState('networkidle');
@@ -92,7 +92,7 @@ test.describe('Sidebar navigation', () => {
 // SIDEBAR LINK NAVIGATION — each link lands on the correct page
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Sidebar link navigation', () => {
+test.describe('Sidebar link navigation @api:navigation @priority:medium', () => {
   const navTargets = [
     { name: 'Wallets', url: '/wallet' },
     { name: 'Bank ePresentations', url: '/bank-e-presentations' },
@@ -116,7 +116,7 @@ test.describe('Sidebar link navigation', () => {
 // WALLET PAGE  /wallet
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Wallet page', () => {
+test.describe('Wallet page @api:wallet @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/wallet`);
     await page.waitForLoadState('networkidle');
@@ -139,7 +139,7 @@ test.describe('Wallet page', () => {
 // BANK E-PRESENTATIONS PAGE  /bank-e-presentations
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Bank ePresentations page', () => {
+test.describe('Bank ePresentations page @api:bank-epresentations @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/bank-e-presentations`);
     await page.waitForLoadState('networkidle');
@@ -158,7 +158,7 @@ test.describe('Bank ePresentations page', () => {
 // BILLS OF EXCHANGE PAGE  /bills-of-exchange
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Bills of Exchange page', () => {
+test.describe('Bills of Exchange page @api:bills-of-exchange @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/bills-of-exchange`);
     await page.waitForLoadState('networkidle');
@@ -181,7 +181,7 @@ test.describe('Bills of Exchange page', () => {
 // CONTACTS PAGE  /contacts
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Contacts page', () => {
+test.describe('Contacts page @api:contacts @priority:high', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/contacts`);
     await page.waitForLoadState('networkidle');
@@ -228,7 +228,7 @@ test.describe('Contacts page', () => {
 // MANAGE TEAMS PAGE  /teams
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Manage Teams page', () => {
+test.describe('Manage Teams page @api:teams @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/teams`);
     await page.waitForLoadState('networkidle');
@@ -262,7 +262,7 @@ test.describe('Manage Teams page', () => {
 // VERIFY & ENDORSE DOCUMENT PAGE  /verify-and-endorse-document
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Verify and Endorse Document page', () => {
+test.describe('Verify and Endorse Document page @api:verify-endorse @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/verify-and-endorse-document`);
     await page.waitForLoadState('networkidle');
@@ -288,7 +288,7 @@ test.describe('Verify and Endorse Document page', () => {
 // SETTINGS PAGE  /settings
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Settings — Company Settings', () => {
+test.describe('Settings — Company Settings @api:settings @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/settings`);
     await page.waitForLoadState('networkidle');
@@ -338,7 +338,7 @@ test.describe('Settings — Company Settings', () => {
   });
 });
 
-test.describe('Settings — Email Notifications', () => {
+test.describe('Settings — Email Notifications @api:settings @priority:medium', () => {
   test('navigating to Email Notifications tab works', async ({ page }) => {
     await page.goto(`${BASE_URL}/settings`);
     await page.waitForLoadState('networkidle');
@@ -348,7 +348,7 @@ test.describe('Settings — Email Notifications', () => {
   });
 });
 
-test.describe('Settings — Email Configuration', () => {
+test.describe('Settings — Email Configuration @api:settings @priority:medium', () => {
   test('navigating to Email Configuration tab works', async ({ page }) => {
     await page.goto(`${BASE_URL}/settings`);
     await page.waitForLoadState('networkidle');
@@ -362,7 +362,7 @@ test.describe('Settings — Email Configuration', () => {
 // TERMS OF SERVICE  /terms
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Terms of Service page', () => {
+test.describe('Terms of Service page @api:legal @priority:low', () => {
   test('page loads without errors', async ({ page }) => {
     const response = await page.goto(`${BASE_URL}/terms`);
     expect(response?.status()).toBe(200);
@@ -378,7 +378,7 @@ test.describe('Terms of Service page', () => {
 // PRIVACY POLICY  /privacy
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Privacy Policy page', () => {
+test.describe('Privacy Policy page @api:legal @priority:low', () => {
   test('page loads without errors', async ({ page }) => {
     const response = await page.goto(`${BASE_URL}/privacy`);
     expect(response?.status()).toBe(200);
@@ -394,7 +394,7 @@ test.describe('Privacy Policy page', () => {
 // CROSS-PAGE: 404 / UNKNOWN ROUTES
 // ─────────────────────────────────────────────────────────────────────────────
 
-test.describe('Unknown routes', () => {
+test.describe('Unknown routes @api:routing @priority:low', () => {
   test('visiting a non-existent page does not crash', async ({ page }) => {
     const response = await page.goto(`${BASE_URL}/this-page-does-not-exist`);
     // Accept 200 (SPA catch-all) or 404

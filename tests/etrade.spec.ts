@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = 'https://etrade-staging.blockpeer.finance';
+const BASE_URL = process.env.BASE_URL || process.env.BLOCKPEER_BASE_URL || 'https://staging-react.blockpeer.finance';
 
 // ─── Auth / Login Page ───────────────────────────────────────────────────────
 
-test.describe('Login Page', () => {
+test.describe('Login Page @api:auth @priority:high', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/auth/signin`);
   });
@@ -97,7 +97,7 @@ test.describe('Login Page', () => {
 
 // ─── Sign Up Page ────────────────────────────────────────────────────────────
 
-test.describe('Sign Up Page', () => {
+test.describe('Sign Up Page @api:auth @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/auth/signup`);
   });
@@ -169,7 +169,7 @@ test.describe('Sign Up Page', () => {
 
 // ─── Forgot Password Page ────────────────────────────────────────────────────
 
-test.describe('Forgot Password Page', () => {
+test.describe('Forgot Password Page @api:auth @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE_URL}/auth/forgot-password`);
   });
@@ -216,7 +216,7 @@ test.describe('Forgot Password Page', () => {
 
 // ─── Navigation / Logo ───────────────────────────────────────────────────────
 
-test.describe('Cross-page navigation', () => {
+test.describe('Cross-page navigation @api:navigation @priority:low', () => {
   test('logo on login page goes back to root (which redirects to signin)', async ({ page }) => {
     await page.goto(`${BASE_URL}/auth/signin`);
     await page.getByRole('link', { name: /BlockPeer Logo/i }).click();
