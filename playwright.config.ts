@@ -15,6 +15,7 @@
  */
 
 import { defineConfig, devices } from '@playwright/test';
+import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 
@@ -43,6 +44,74 @@ const runFolder = path.join('test-results', runId);
 const jsonOutputFile = path.join(runFolder, 'results.json');
 const rawHeader = process.env.AUTHORIZATION_HEADER || process.env.API_TOKEN || '';
 const authorizationHeader = rawHeader ? normalizeAuthorizationHeader(rawHeader) : '';
+
+/** e.g. my-app → MY_APP_BASE_URL */
+function suiteSlugToBaseUrlEnvKey(slug: string): string {
+  return `${slug.replace(/-/g, '_').toUpperCase()}_BASE_URL`;
+}
+
+function getCustomSuiteBaseURL(slug: string): string {
+  const key = suiteSlugToBaseUrlEnvKey(slug);
+  const fromKey = process.env[key]?.trim();
+  if (fromKey)
+    return fromKey.replace(/\/?$/, '') + '/';
+  const b = process.env.BASE_URL?.trim();
+  if (b)
+    return b.replace(/\/?$/, '') + '/';
+  return BASE_URL.replace(/\/?$/, '') + '/';
+}
+
+/** Custom product suites: tests/<slug>/auth.setup.ts (not blockpeer / crickbox). */
+function discoverCustomSuites(testsRoot: string): string[] {
+  if (!fs.existsSync(testsRoot))
+    return [];
+  return fs.readdirSync(testsRoot, { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)
+    .filter((name) => {
+      if (name === 'blockpeer' || name === 'crickbox' || name.startsWith('.'))
+        return false;
+      if (!/^[a-z0-9][a-z0-9-]*$/.test(name))
+        return false;
+      return fs.existsSync(path.join(testsRoot, name, 'auth.setup.ts'));
+    });
+}
+
+const testsRoot = path.join(__dirname, 'tests');
+const customSuites = discoverCustomSuites(testsRoot);
+
+const customProjects = customSuites.flatMap((slug) => {
+  const bu = getCustomSuiteBaseURL(slug);
+  const authFile = path.join(__dirname, `.auth/${slug}-session.json`);
+  return [
+    {
+      name: `${slug}-setup`,
+      testMatch: `**/${slug}/auth.setup.ts`,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: bu,
+      },
+    },
+    {
+      name: `${slug}-public`,
+      testMatch: `**/${slug}/priority-*/public/**/*.spec.ts`,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: bu,
+      },
+    },
+    {
+      name: `${slug}-authenticated`,
+      testMatch: `**/${slug}/priority-*/authenticated/**/*.spec.ts`,
+      dependencies: [`${slug}-setup`],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: bu,
+        storageState: authFile,
+      },
+    },
+  ];
+});
 
 export default defineConfig({
   testDir: './tests',
@@ -125,5 +194,6 @@ export default defineConfig({
         storageState: CRICKBOX_AUTH_FILE,
       },
     },
+    ...customProjects,
   ],
 });

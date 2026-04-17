@@ -17,6 +17,7 @@
   "scripts": {
     "test": "playwright test",
     "clean:results": "node scripts/clean-test-results.mjs",
+    "run-prompt": "node run-prompt.mjs",
     "test:priority": "node scripts/run-priority-tests.mjs",
     "test:priority:public": "SKIP_AUTH_SETUP=true node scripts/run-priority-tests.mjs",
     "test:priority:blockpeer": "node scripts/run-priority-tests.mjs --sites=blockpeer",
@@ -24,7 +25,8 @@
     "test:priority:blockpeer:medium": "node scripts/run-priority-tests.mjs --sites=blockpeer --priorities=medium --run-id=run-blockpeer-medium",
     "test:priority:blockpeer:low": "node scripts/run-priority-tests.mjs --sites=blockpeer --priorities=low --run-id=run-blockpeer-low",
     "test:priority:crickbox": "node scripts/run-priority-tests.mjs --sites=crickbox",
-    "test:report": "node scripts/export-test-report.mjs"
+    "test:report": "node scripts/export-test-report.mjs",
+    "scaffold:suite": "node scripts/scaffold-test-suite.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
