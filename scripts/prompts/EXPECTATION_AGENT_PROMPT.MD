@@ -14,7 +14,7 @@ You must complete everything in one run.
 
 ```ini id="y5a8mo"
 [PROMPT_CONFIG]
-SUITE=blockpeer
+WEBSITE_NAME=blockpeer
 BASE_URL_ENV_KEY=TEST_GEN_BASE_URL
 EMAIL_ENV_KEY=TEST_GEN_EMAIL
 PASSWORD_ENV_KEY=TEST_GEN_PASSWORD
@@ -28,7 +28,7 @@ EXPECTATIONS=
 
 # CONFIGURATION RULES
 
-* `SUITE` = suite folder under `tests/`
+* `WEBSITE_NAME` = suite folder slug under `tests/` (same as `SUITE` / `SUITE_NAME` / `TEST_SUITE` in `run-agent-prompt.mjs`). Use the filesystem folder name (e.g. `blockpeer`), not a display name.
 * `BASE_URL_ENV_KEY` = `.env` variable containing site URL
 * `EMAIL_ENV_KEY` = `.env` variable containing login email
 * `PASSWORD_ENV_KEY` = `.env` variable containing password
@@ -74,7 +74,8 @@ Across all discoverable modules:
 * error states
 * protected routes
 * role permissions
-* session persistence
+* session persistence   
+* etc.
 
 ## 2. Path-Based Expectation Tests
 
@@ -93,7 +94,8 @@ Create the highest useful number of tests by covering:
 * persistence checks
 * refresh checks
 * multi-step flows
-* regression scenarios
+* regression scenarios   
+* etc.
 
 ---
 
@@ -115,6 +117,7 @@ Generate:
 * search with no result shows empty state
 * search clears correctly
 * search survives refresh
+* etc.
 
 ## Pagination
 
@@ -126,6 +129,7 @@ Generate:
 * last page works
 * disabled previous on first page
 * disabled next on last page
+* etc.
 
 ## Forms
 
@@ -138,6 +142,7 @@ Generate:
 * save button disabled until valid
 * success toast visible
 * data persists after refresh
+* etc.
 
 ---
 
@@ -158,6 +163,7 @@ Into multiple tests:
 * each item clickable
 * active state works
 * navigation works after click
+* etc.
 
 If expectation says:
 
@@ -174,6 +180,7 @@ Generate:
 * tabs clickable
 * correct content shown per tab
 * active tab state changes
+* etc.
 
 ---
 
@@ -196,6 +203,7 @@ If contains words:
 * selected
 * active
 * hidden
+* etc.
 
 Create UI assertion tests.
 
@@ -208,6 +216,7 @@ If contains actions:
 * export
 * import
 * download
+* etc.
 
 Create behavior tests.
 
@@ -239,6 +248,7 @@ Use `storageState`.
 * route loads
 * critical expectations
 * core revenue flows
+* etc.
 
 ## priority-medium
 
@@ -249,6 +259,7 @@ Use `storageState`.
 * forms
 * reports
 * expectation behaviors
+* etc.
 
 ## priority-low
 
@@ -257,13 +268,14 @@ Use `storageState`.
 * footer
 * minor validations
 * cosmetic expectations
+* etc.
 
 ---
 
 # FOLDER STRUCTURE
 
 ```bash id="24bkvf"
-tests/<SUITE>/
+tests/<WEBSITE_NAME>/
 auth.setup.ts
 
 priority-high/

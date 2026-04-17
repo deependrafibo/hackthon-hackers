@@ -12,7 +12,7 @@ You must work independently and complete everything in one run.
 
 ```ini id="x1yz3k"
 [PROMPT_CONFIG]
-SUITE=blockpeer
+WEBSITE_NAME=blockpeer
 BASE_URL_ENV_KEY=TEST_GEN_BASE_URL
 EMAIL_ENV_KEY=TEST_GEN_EMAIL
 PASSWORD_ENV_KEY=TEST_GEN_PASSWORD
@@ -23,7 +23,7 @@ PASSWORD_ENV_KEY=TEST_GEN_PASSWORD
 
 # CONFIGURATION RULES
 
-* `SUITE` = test folder name inside `tests/`
+* `WEBSITE_NAME` = filesystem slug for the Playwright suite folder under `tests/` (e.g. `blockpeer`). `run-agent-prompt.mjs` also accepts `SUITE`, `SUITE_NAME`, or `TEST_SUITE` as the same value. This is **not** the marketing site title — it must match the folder name used in `playwright.config.ts` (`tests/<slug>/...`).
 * `BASE_URL_ENV_KEY` = `.env` variable storing website URL
 * `EMAIL_ENV_KEY` = `.env` variable storing login email
 * `PASSWORD_ENV_KEY` = `.env` variable storing password
@@ -71,6 +71,7 @@ For each discovered feature/module/page, generate multiple categories of tests:
 * expected navigation
 * valid form submission
 * successful CRUD flows
+* etc.
 
 ## Negative Path
 
@@ -79,6 +80,7 @@ For each discovered feature/module/page, generate multiple categories of tests:
 * empty search
 * missing required fields
 * bad navigation attempts
+* etc.
 
 ## Edge Cases
 
@@ -88,6 +90,7 @@ For each discovered feature/module/page, generate multiple categories of tests:
 * duplicate entries
 * refresh persistence
 * network delay tolerance
+* etc.
 
 ## UI State Cases
 
@@ -97,6 +100,7 @@ For each discovered feature/module/page, generate multiple categories of tests:
 * modal open/close
 * tab switching
 * selected states
+* etc.
 
 ## Regression Cases
 
@@ -104,6 +108,7 @@ For each discovered feature/module/page, generate multiple categories of tests:
 * data retained
 * filters persist
 * session remains active
+* etc.
 
 Do not stop at one test per feature.
 
@@ -112,7 +117,7 @@ Do not stop at one test per feature.
 # REQUIRED FOLDER STRUCTURE
 
 ```bash id="j8sq4n"
-tests/<SUITE>/
+tests/<WEBSITE_NAME>/
 │── auth.setup.ts
 
 │── priority-high/
@@ -163,6 +168,7 @@ Inspect target site and identify:
 * Pricing
 * Contact
 * Footer pages
+* etc.
 
 ## Authenticated Pages
 
@@ -172,6 +178,7 @@ Inspect target site and identify:
 * Reports
 * Notifications
 * Internal modules
+* etc.
 
 ## Functional Areas
 
@@ -186,6 +193,7 @@ Inspect target site and identify:
 * Permissions
 * Error states
 * Empty states
+* etc.
 
 Infer missing flows intelligently.
 
@@ -416,7 +424,7 @@ Then continue expanding coverage.
 Create / update:
 
 ```bash id="azl5tt"
-tests/<SUITE>/**
+tests/<WEBSITE_NAME>/**
 ```
 
 Then output final summary:
@@ -462,4 +470,4 @@ Complete when:
 6. Fix failures
 7. Deliver final result for:
 
-`{{SUITE}}`
+`{{WEBSITE_NAME}}` (injected slug; `{{SUITE}}` is equivalent)

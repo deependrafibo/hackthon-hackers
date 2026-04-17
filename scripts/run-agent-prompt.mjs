@@ -103,9 +103,16 @@ function parsePromptConfigBlock(raw) {
   return { vars, body: raw.replace(fullMatch, '') };
 }
 
-/** SUITE, SUITE_NAME, and TEST_SUITE are aliases — all set the product / folder name at the top of the prompt. */
+/**
+ * SUITE, WEBSITE_NAME, SUITE_NAME, and TEST_SUITE are aliases — all set the tests/ subfolder slug
+ * (e.g. blockpeer), not a human marketing site title. Use lowercase slug matching tests/<slug>/.
+ */
 function normalizePromptConfigSuite(vars) {
-  const merged = trim(vars.SUITE) || trim(vars.SUITE_NAME) || trim(vars.TEST_SUITE);
+  const merged =
+    trim(vars.SUITE) ||
+    trim(vars.WEBSITE_NAME) ||
+    trim(vars.SUITE_NAME) ||
+    trim(vars.TEST_SUITE);
   if (merged)
     vars.SUITE = merged;
 }
@@ -234,7 +241,7 @@ URL resolution order:
   3) BASE_URL_ENV_KEY= in [PROMPT_CONFIG] → read that variable from .env
   4) TEST_GEN_BASE_URL → BLOCKPEER_BASE_URL → BASE_URL (after TEST_GEN_* aliases)
 
-[PROMPT_CONFIG] can set SUITE (or SUITE_NAME / TEST_SUITE), EMAIL_ENV_KEY, PASSWORD_ENV_KEY, BASE_URL_ENV_KEY.
+[PROMPT_CONFIG] can set WEBSITE_NAME or SUITE (or SUITE_NAME / TEST_SUITE), EMAIL_ENV_KEY, PASSWORD_ENV_KEY, BASE_URL_ENV_KEY.
   If BASE_URL_ENV_KEY is set, only that .env variable (or --url / TARGET_SITE_URL) supplies the URL — no cross-site fallback.
   Optional: a thin prompt file can use {{DEFAULT_AGENT_PROMPT_BODY}} to include the body of scripts/prompts/AGENT_PROMPT.md.
 
@@ -327,7 +334,8 @@ function main() {
     .replaceAll('{{EMAIL_ENV_KEY}}', emailKey)
     .replaceAll('{{PASSWORD_ENV_KEY}}', passwordKey)
     .replaceAll('{{BASE_URL_ENV_KEY}}', baseUrlEnvKey || '(not set — URL from CLI / TARGET_SITE_URL / fallbacks)')
-    .replaceAll('{{SUITE}}', suite);
+    .replaceAll('{{SUITE}}', suite)
+    .replaceAll('{{WEBSITE_NAME}}', suite);
 
   const testSiteLine =
     suite === 'crickbox'
@@ -345,7 +353,7 @@ function main() {
 
   const injected =
     `## Auto-injected by run-agent-prompt (never log secret values)\n\n` +
-    `- **Playwright suite (\`SUITE\`):** ${suite}\n` +
+    `- **Playwright tests folder (\`WEBSITE_NAME\` / \`SUITE\`):** ${suite}\n` +
     `- **Resolved site URL:** ${resolved}\n` +
     `- **URL source:** ${urlSource}\n` +
     `- **\`.env\` key names (values only in \`.env\`, never in this prompt):**\n` +
@@ -372,7 +380,7 @@ function main() {
 
   if (argv['dry-run']) {
     console.log('[run-agent-prompt] dry-run OK');
-    console.log('  SUITE:', suite);
+    console.log('  WEBSITE_NAME / SUITE:', suite);
     console.log('  URL:', resolved);
     console.log('  source:', urlSource);
     console.log('  EMAIL_ENV_KEY:', emailKey, '| PASSWORD_ENV_KEY:', passwordKey);

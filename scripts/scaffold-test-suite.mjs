@@ -142,7 +142,7 @@ function main() {
   console.log('Run this suite:');
   console.log(`  TEST_SITE=${slug} npx playwright test --project=${slug}-setup --project=${slug}-public --project=${slug}-authenticated`);
   console.log('');
-  console.log('In scripts/prompts/AGENT_PROMPT.md set SUITE=' + slug + ' and matching *_ENV_KEY names.');
+  console.log('In scripts/prompts/AGENT_PROMPT.md set WEBSITE_NAME=' + slug + ' (or SUITE=) and matching *_ENV_KEY names.');
 }
 
 main();
