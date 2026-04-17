@@ -7,6 +7,7 @@ import {
   type PriorityLevel,
   saveTestResult,
 } from '../utils/testResultManager';
+import { uploadToCloudinary } from '../utils/cloudinaryUploader';
 
 const API_TAG_REGEX = /@api:([a-zA-Z0-9._-]+)/;
 const PRIORITY_TAG_REGEX = /@priority:(high|medium|low)/;
@@ -44,6 +45,15 @@ class PriorityResultReporter implements Reporter {
     const apiFolder = await createApiFolder(websiteFolder, apiName);
     const priorityFolder = await createPriorityFolder(apiFolder, priority);
 
+    const attachmentUrls = (
+      await Promise.all(
+        result.attachments
+          .map((a) => a.path)
+          .filter(Boolean)
+          .map((p) => uploadToCloudinary(p as string))
+      )
+    ).filter(Boolean);
+
     await saveTestResult(priorityFolder, {
       title: test.title,
       fullTitle,
@@ -58,7 +68,7 @@ class PriorityResultReporter implements Reporter {
       workerIndex: result.workerIndex,
       website: process.env.BASE_URL,
       error: result.error?.message,
-      attachments: result.attachments.map((attachment) => attachment.path).filter(Boolean) as string[],
+      attachments: attachmentUrls,
     });
   }
 }

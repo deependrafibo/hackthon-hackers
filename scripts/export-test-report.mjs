@@ -161,9 +161,13 @@ function addDetailsSheet(workbook, records, runFolder) {
   });
 
   for (const record of sortedRecords) {
-    const attachment = record.attachments?.[0]
-      ? path.relative(runFolder, record.attachments[0])
-      : '';
+    const rawAttachment = record.attachments?.[0] || '';
+    const isUrl = rawAttachment.startsWith('http');
+    const attachment = isUrl
+      ? rawAttachment
+      : rawAttachment
+        ? path.relative(runFolder, rawAttachment)
+        : '';
     const row = detailsSheet.addRow({
       ...record,
       attachment,
@@ -175,7 +179,7 @@ function addDetailsSheet(workbook, records, runFolder) {
     if (attachment) {
       attachmentCell.value = {
         text: attachment,
-        hyperlink: path.resolve(runFolder, attachment),
+        hyperlink: isUrl ? attachment : path.resolve(runFolder, attachment),
       };
       attachmentCell.font = { color: { argb: 'FF0563C1' }, underline: true };
     }
