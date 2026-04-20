@@ -3,7 +3,7 @@ import path from 'path';
 
 export const AUTH_FILE = path.join(__dirname, '../../.auth/crickbox-session.json');
 
-const BASE_URL = process.env.CRICKBOX_BASE_URL || process.env.BASE_URL || 'https://crick-box07.vercel.app/';
+const BASE_URL = (process.env.CRICKBOX_BASE_URL || process.env.BASE_URL || 'https://crick-box07.vercel.app').replace(/\/+$/, '');
 const EMAIL = process.env.CRICKBOX_EMAIL || process.env.TEST_EMAIL || '';
 const PASSWORD = process.env.CRICKBOX_PASSWORD || process.env.TEST_PASSWORD || '';
 
@@ -20,7 +20,7 @@ setup('authenticate @api:auth @priority:high', async ({ page }) => {
     await headerSignIn.first().click();
   } else {
     // fallback: common auth route patterns
-    await page.goto(`${BASE_URL.replace(/\/$/, '')}/auth/signin`);
+    await page.goto(`${BASE_URL}/auth/signin`);
   }
 
   const emailField = page

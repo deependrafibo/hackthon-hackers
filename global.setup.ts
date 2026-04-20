@@ -1,15 +1,6 @@
 import path from 'path';
 import dotenv from 'dotenv';
-
-const SITE_BASE_URL_KEYS: Record<string, string> = {
-  blockpeer: 'BLOCKPEER_BASE_URL',
-  crickbox: 'CRICKBOX_BASE_URL',
-};
-
-const SITE_AUTH_KEYS: Record<string, string[]> = {
-  blockpeer: ['BLOCKPEER_EMAIL', 'BLOCKPEER_PASSWORD'],
-  crickbox: ['CRICKBOX_EMAIL', 'CRICKBOX_PASSWORD'],
-};
+import { discoverSites } from './utils/siteDiscovery';
 
 function normalizeAuthorizationHeader(rawToken: string): string {
   const token = rawToken.trim();
@@ -19,30 +10,29 @@ function normalizeAuthorizationHeader(rawToken: string): string {
 }
 
 function validateEnvironment(): void {
-  const site = (process.env.TEST_SITE || 'blockpeer').trim();
-  const baseUrlKey = SITE_BASE_URL_KEYS[site];
-  const missing: string[] = [];
+  const sites = discoverSites();
 
-  const hasBaseUrl =
-    (baseUrlKey && process.env[baseUrlKey]?.trim()) || process.env.BASE_URL?.trim();
-  if (!hasBaseUrl)
-    missing.push(baseUrlKey || 'BASE_URL');
-
-  const shouldValidateAuth = process.env.SKIP_AUTH_SETUP !== 'true';
-
-  if (shouldValidateAuth) {
-    const siteAuthKeys = SITE_AUTH_KEYS[site] || [];
-    missing.push(...siteAuthKeys.filter((name) => !process.env[name]?.trim()));
+  if (!sites.length) {
+    console.error('\n[env] No sites discovered. Add at least one *_BASE_URL entry to your .env file.');
+    console.error('[env] Example: MYSITE_BASE_URL=https://mysite.example.com\n');
+    throw new Error('No sites discovered from environment variables.');
   }
 
-  if (!missing.length)
-    return;
+  const skipAuth = process.env.SKIP_AUTH_SETUP === 'true';
+  const warnings: string[] = [];
 
-  console.error('\n[env] Missing required environment variables:');
-  for (const name of missing)
-    console.error(` - ${name}`);
-  console.error('\n[env] Please update your .env file before running tests.\n');
-  throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  for (const site of sites) {
+    if (!skipAuth && (!site.email || !site.password)) {
+      warnings.push(`  ${site.name.toUpperCase()}: missing ${site.name.toUpperCase()}_EMAIL or ${site.name.toUpperCase()}_PASSWORD (auth tests will be skipped)`);
+    }
+  }
+
+  console.log(`[env] Discovered ${sites.length} site(s): ${sites.map((s) => s.name).join(', ')}`);
+  if (warnings.length) {
+    console.warn('[env] Warnings:');
+    for (const w of warnings)
+      console.warn(w);
+  }
 }
 
 export default async function globalSetup(): Promise<void> {

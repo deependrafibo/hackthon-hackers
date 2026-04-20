@@ -22,6 +22,8 @@ async function listDirectories(dirPath) {
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
 }
 
+const AGGREGATED_FILES = new Set(['results.json', 'passed.json', 'failed.json', 'full_result.json']);
+
 async function collectJsonFiles(dirPath, output = []) {
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
   for (const entry of entries) {
@@ -30,7 +32,7 @@ async function collectJsonFiles(dirPath, output = []) {
       await collectJsonFiles(fullPath, output);
       continue;
     }
-    if (entry.isFile() && entry.name.endsWith('.json') && entry.name !== 'results.json')
+    if (entry.isFile() && entry.name.endsWith('.json') && !AGGREGATED_FILES.has(entry.name))
       output.push(fullPath);
   }
   return output;
@@ -136,6 +138,7 @@ function addDetailsSheet(workbook, records, runFolder) {
     { header: 'Website', key: 'websiteName', width: 22 },
     { header: 'API', key: 'apiName', width: 24 },
     { header: 'Priority', key: 'priority', width: 12 },
+    { header: 'Outcome', key: 'outcome', width: 12 },
     { header: 'Full Title', key: 'fullTitle', width: 70 },
     { header: 'Test Title', key: 'title', width: 48 },
     { header: 'Status', key: 'status', width: 12 },
@@ -144,7 +147,8 @@ function addDetailsSheet(workbook, records, runFolder) {
     { header: 'Started At', key: 'startedAt', width: 28 },
     { header: 'Finished At', key: 'finishedAt', width: 28 },
     { header: 'Error', key: 'error', width: 60 },
-    { header: 'Screenshot/Attachment', key: 'attachment', width: 70 },
+    { header: 'Screenshot', key: 'screenshot', width: 70 },
+    { header: 'Retry cURL', key: 'retryCurl', width: 80 },
   ];
 
   const sortedRecords = [...records].sort((a, b) => {
@@ -161,26 +165,75 @@ function addDetailsSheet(workbook, records, runFolder) {
   });
 
   for (const record of sortedRecords) {
-    const attachment = record.attachments?.[0]
-      ? path.relative(runFolder, record.attachments[0])
-      : '';
+    const screenshot = record.screenshotPaths?.[0]
+      ? path.relative(runFolder, record.screenshotPaths[0])
+      : (record.attachments?.[0] ? path.relative(runFolder, record.attachments[0]) : '');
+
     const row = detailsSheet.addRow({
       ...record,
-      attachment,
+      outcome: record.outcome || (record.status === 'passed' ? 'passed' : 'failed'),
+      screenshot,
+      retryCurl: record.retryCurl || '',
     });
+
     const statusCell = row.getCell('status');
     colorizeStatusCell(statusCell, record.status);
 
-    const attachmentCell = row.getCell('attachment');
-    if (attachment) {
-      attachmentCell.value = {
-        text: attachment,
-        hyperlink: path.resolve(runFolder, attachment),
+    const outcomeCell = row.getCell('outcome');
+    colorizeStatusCell(outcomeCell, record.outcome || record.status);
+
+    const screenshotCell = row.getCell('screenshot');
+    if (screenshot) {
+      screenshotCell.value = {
+        text: screenshot,
+        hyperlink: path.resolve(runFolder, screenshot),
       };
-      attachmentCell.font = { color: { argb: 'FF0563C1' }, underline: true };
+      screenshotCell.font = { color: { argb: 'FF0563C1' }, underline: true };
     }
   }
   formatHeader(detailsSheet);
+}
+
+function addFailedSheet(workbook, records, runFolder) {
+  const failedRecords = records.filter(
+    (r) => r.status === 'failed' || r.status === 'timedOut' || r.outcome === 'failed',
+  );
+  if (!failedRecords.length)
+    return;
+
+  const failedSheet = workbook.addWorksheet('Failed Tests');
+  failedSheet.columns = [
+    { header: 'Website', key: 'websiteName', width: 22 },
+    { header: 'API', key: 'apiName', width: 24 },
+    { header: 'Priority', key: 'priority', width: 12 },
+    { header: 'Test Title', key: 'title', width: 48 },
+    { header: 'Error', key: 'error', width: 80 },
+    { header: 'Screenshot', key: 'screenshot', width: 70 },
+    { header: 'Retry cURL', key: 'retryCurl', width: 80 },
+    { header: 'Duration (ms)', key: 'durationMs', width: 16 },
+  ];
+
+  for (const record of failedRecords) {
+    const screenshot = record.screenshotPaths?.[0]
+      ? path.relative(runFolder, record.screenshotPaths[0])
+      : '';
+
+    const row = failedSheet.addRow({
+      ...record,
+      screenshot,
+      retryCurl: record.retryCurl || '',
+    });
+
+    const screenshotCell = row.getCell('screenshot');
+    if (screenshot) {
+      screenshotCell.value = {
+        text: screenshot,
+        hyperlink: path.resolve(runFolder, screenshot),
+      };
+      screenshotCell.font = { color: { argb: 'FF0563C1' }, underline: true };
+    }
+  }
+  formatHeader(failedSheet);
 }
 
 async function main() {
@@ -202,12 +255,17 @@ async function main() {
   workbook.created = new Date();
   addSummarySheet(workbook, records);
   addDetailsSheet(workbook, records, runFolder);
+  addFailedSheet(workbook, records, runFolder);
 
   const summaryDir = path.join(runFolder, 'summary');
   await fs.mkdir(summaryDir, { recursive: true });
   const outputFile = path.join(summaryDir, 'final-test-report.xlsx');
   await workbook.xlsx.writeFile(outputFile);
+
+  const passedCount = records.filter((r) => r.outcome === 'passed' || r.status === 'passed').length;
+  const failedCount = records.filter((r) => r.outcome === 'failed' || (r.status !== 'passed' && r.status !== 'skipped')).length;
   console.log(`[excel] Report generated at ${outputFile}`);
+  console.log(`[excel] Total: ${records.length} | Passed: ${passedCount} | Failed: ${failedCount}`);
 }
 
 main().catch((error) => {

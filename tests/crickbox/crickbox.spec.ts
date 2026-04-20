@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/';
+const BASE_URL = (process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app').replace(/\/+$/, '');
 
 test.describe('Crickbox smoke @api:core @priority:high', () => {
   test('home page loads successfully', async ({ page }) => {

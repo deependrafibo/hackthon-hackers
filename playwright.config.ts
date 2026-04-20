@@ -1,29 +1,11 @@
-/**
- * Copyright (c) Microsoft Corporation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type Project } from '@playwright/test';
 import path from 'path';
 import dotenv from 'dotenv';
+import { discoverSites, type SiteConfig } from './utils/siteDiscovery';
 
-// Load .env from project root so TEST_EMAIL / TEST_PASSWORD are available
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const BLOCKPEER_AUTH_FILE = path.join(__dirname, '.auth/blockpeer-session.json');
-const CRICKBOX_AUTH_FILE = path.join(__dirname, '.auth/crickbox-session.json');
-const BASE_URL = process.env.BASE_URL || process.env.BLOCKPEER_BASE_URL || 'https://staging-react.blockpeer.finance';
+const sites = discoverSites();
 
 function resolveRunId(): string {
   if (process.env.TEST_RUN_ID?.trim())
@@ -44,6 +26,67 @@ const jsonOutputFile = path.join(runFolder, 'results.json');
 const rawHeader = process.env.AUTHORIZATION_HEADER || process.env.API_TOKEN || '';
 const authorizationHeader = rawHeader ? normalizeAuthorizationHeader(rawHeader) : '';
 
+function buildProjectsForSite(site: SiteConfig): Project[] {
+  const authFile = path.join(__dirname, `.auth/${site.name}-session.json`);
+  const projects: Project[] = [];
+
+  const setupName = `${site.name}-setup`;
+  projects.push({
+    name: setupName,
+    testMatch: site.hasCustomAuth
+      ? `**/${site.name}/auth.setup.ts`
+      : '**/_generic/auth.setup.ts',
+    use: {
+      ...devices['Desktop Chrome'],
+      baseURL: site.baseURL,
+    },
+  });
+
+  const publicTestMatch: string[] = ['**/_generic/**/*.spec.ts'];
+  const publicTestIgnore: string[] = ['**/_generic/auth.setup.ts'];
+
+  if (site.hasCustomTests) {
+    publicTestMatch.push(`**/${site.name}/**/*.spec.ts`);
+    publicTestIgnore.push(`**/${site.name}/authenticated/**/*.spec.ts`);
+    publicTestIgnore.push(`**/${site.name}/auth.setup.ts`);
+  }
+
+  projects.push({
+    name: `${site.name}-public`,
+    testMatch: publicTestMatch,
+    testIgnore: publicTestIgnore,
+    use: {
+      ...devices['Desktop Chrome'],
+      baseURL: site.baseURL,
+    },
+  });
+
+  const authenticatedMatch: string[] = [];
+  if (site.hasCustomTests)
+    authenticatedMatch.push(`**/${site.name}/authenticated/**/*.spec.ts`);
+
+  if (authenticatedMatch.length) {
+    projects.push({
+      name: `${site.name}-authenticated`,
+      testMatch: authenticatedMatch,
+      dependencies: [setupName],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: site.baseURL,
+        storageState: authFile,
+      },
+    });
+  }
+
+  return projects;
+}
+
+const dynamicProjects = sites.flatMap(buildProjectsForSite);
+
+if (!dynamicProjects.length) {
+  console.warn('[config] No sites discovered from env vars (*_BASE_URL). Check your .env file.');
+}
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
@@ -58,7 +101,6 @@ export default defineConfig({
   ],
   maxFailures: process.env.CI ? 1 : 0,
   use: {
-    baseURL: BASE_URL,
     channel: 'chrome',
     headless: true,
     screenshot: 'on',
@@ -69,61 +111,5 @@ export default defineConfig({
     extraHTTPHeaders: authorizationHeader ? { Authorization: authorizationHeader } : undefined,
   },
   outputDir: path.join(runFolder, 'artifacts'),
-  projects: [
-    // Blockpeer (existing suite)
-    {
-      name: 'blockpeer-setup',
-      testMatch: '**/blockpeer/auth.setup.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.BLOCKPEER_BASE_URL || BASE_URL,
-      },
-    },
-    {
-      name: 'blockpeer-public',
-      testMatch: '**/blockpeer/priority-*/public/**/*.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.BLOCKPEER_BASE_URL || BASE_URL,
-      },
-    },
-    {
-      name: 'blockpeer-authenticated',
-      testMatch: '**/blockpeer/priority-*/authenticated/**/*.spec.ts',
-      dependencies: ['blockpeer-setup'],
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.BLOCKPEER_BASE_URL || BASE_URL,
-        storageState: BLOCKPEER_AUTH_FILE,   // every test starts already logged in
-      },
-    },
-    // Crickbox (new suite)
-    {
-      name: 'crickbox-setup',
-      testMatch: '**/crickbox/auth.setup.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/',
-      },
-    },
-    {
-      name: 'crickbox-public',
-      testMatch: '**/crickbox/**/*.spec.ts',
-      testIgnore: '**/crickbox/authenticated/**/*.spec.ts',
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/',
-      },
-    },
-    {
-      name: 'crickbox-authenticated',
-      testMatch: '**/crickbox/authenticated/**/*.spec.ts',
-      dependencies: ['crickbox-setup'],
-      use: {
-        ...devices['Desktop Chrome'],
-        baseURL: process.env.CRICKBOX_BASE_URL || 'https://crick-box07.vercel.app/',
-        storageState: CRICKBOX_AUTH_FILE,
-      },
-    },
-  ],
+  projects: dynamicProjects,
 });
