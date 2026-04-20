@@ -96,6 +96,7 @@ export default defineConfig({
   timeout: 90000,
   reporter: [
     ['list'],
+    ['html', { open: 'never', outputFolder: path.join(runFolder, 'html-report') }],
     ['json', { outputFile: jsonOutputFile }],
     [path.resolve(__dirname, './reporters/priorityResultReporter.ts')],
   ],

@@ -24,7 +24,11 @@
     "test:priority:blockpeer:medium": "node scripts/run-priority-tests.mjs --sites=blockpeer --priorities=medium --run-id=run-blockpeer-medium",
     "test:priority:blockpeer:low": "node scripts/run-priority-tests.mjs --sites=blockpeer --priorities=low --run-id=run-blockpeer-low",
     "test:priority:crickbox": "node scripts/run-priority-tests.mjs --sites=crickbox",
-    "test:report": "node scripts/export-test-report.mjs"
+    "test:report": "node scripts/export-test-report.mjs",
+    "test:show": "npx playwright show-report test-results/$(ls -t test-results | head -1)/html-report",
+    "graph:build": "source .venv/bin/activate && graphify update .",
+    "graph:view": "open graphify-out/graph.html",
+    "graph:query": "source .venv/bin/activate && graphify query"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
