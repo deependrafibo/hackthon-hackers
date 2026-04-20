@@ -4,6 +4,7 @@ node_modules/
 .vscode/
 /test-results/
 /.playwright-cli/
-.claude/skills/playwright-cli/
 package-lock.json
 .venv/
+.DS_Store
+graphify-out/

@@ -1,19 +1,11 @@
 {
-  "name": "@playwright/cli",
-  "version": "0.1.6",
-  "description": "Playwright CLI",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/microsoft/playwright-cli.git"
-  },
-  "homepage": "https://playwright.dev",
+  "name": "hackthon-hackers",
+  "version": "1.0.0",
+  "description": "Multi-site Playwright test automation framework",
+  "private": true,
   "engines": {
     "node": ">=18"
   },
-  "author": {
-    "name": "Microsoft Corporation"
-  },
-  "license": "Apache-2.0",
   "scripts": {
     "test": "playwright test",
     "clean:results": "node scripts/clean-test-results.mjs",
@@ -26,15 +18,8 @@
     "test:priority:crickbox": "node scripts/run-priority-tests.mjs --sites=crickbox",
     "test:report": "node scripts/export-test-report.mjs",
     "test:show": "npx playwright show-report test-results/$(ls -t test-results | head -1)/html-report",
-    "graph:build": "source .venv/bin/activate && graphify update .",
-    "graph:view": "open graphify-out/graph.html",
-    "graph:query": "source .venv/bin/activate && graphify query",
     "server": "npx tsx server/index.ts",
-    "server:dev": "npx tsx watch server/index.ts",
-    "dev": "npx tsx watch server/index.ts & cd ../report-viewer && npm run dev",
-    "report:dev": "cd report-viewer && npm run dev",
-    "report:build": "cd report-viewer && npm run build",
-    "report:start": "cd report-viewer && npm run start"
+    "server:dev": "npx tsx watch server/index.ts"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
@@ -51,8 +36,5 @@
     "express": "^5.2.1",
     "minimist": "^1.2.5",
     "playwright": "1.60.0-alpha-1775584683000"
-  },
-  "bin": {
-    "playwright-cli": "playwright-cli.js"
   }
 }
