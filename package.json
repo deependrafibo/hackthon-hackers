@@ -49,9 +49,10 @@
     "typescript": "^6.0.2"
   },
   "dependencies": {
+    "@vercel/blob": "^2.3.3",
+    "cloudinary": "^2.9.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "@vercel/blob": "^2.3.3",
     "minimist": "^1.2.5",
     "playwright": "1.60.0-alpha-1775584683000"
   },

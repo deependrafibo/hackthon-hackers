@@ -15,6 +15,7 @@ import {
   type TestResultPayload,
   saveTestResult,
 } from '../utils/testResultManager';
+import { uploadToCloudinary } from '../utils/cloudinaryUploader';
 
 const API_TAG_REGEX = /@api:([a-zA-Z0-9._-]+)/;
 const PRIORITY_TAG_REGEX = /@priority:(high|medium|low)/;
@@ -85,9 +86,9 @@ class PriorityResultReporter implements Reporter {
       copiedScreenshots.push(dest);
     }
 
-    const allAttachments = result.attachments
-      .map((a) => a.path)
-      .filter(Boolean) as string[];
+    const cloudinaryUrls = (
+      await Promise.all(rawScreenshots.map((p) => uploadToCloudinary(p)))
+    ).filter(Boolean);
 
     let retryCurl: string | undefined;
     if (outcome === 'failed') {
@@ -112,7 +113,7 @@ class PriorityResultReporter implements Reporter {
       websiteName,
       error: result.error?.message,
       screenshotPaths: copiedScreenshots.length ? copiedScreenshots : undefined,
-      attachments: allAttachments.length ? allAttachments : undefined,
+      attachments: cloudinaryUrls.length ? cloudinaryUrls : (copiedScreenshots.length ? copiedScreenshots : undefined),
       retryCurl,
     };
 
