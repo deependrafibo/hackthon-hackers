@@ -46,13 +46,14 @@ export default defineConfig({
     {
       name: 'setup',
       testMatch: '**/auth.setup.ts',
+      use: { channel: 'chrome'},
     },
 
     // 2. Public pages (login / signup) — no auth needed
     {
       name: 'public',
       testMatch: '**/etrade.spec.ts',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], channel: 'msedge' },
     },
 
     // 3. Authenticated pages — depends on setup finishing first
@@ -62,6 +63,7 @@ export default defineConfig({
       dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'msedge',
         storageState: AUTH_FILE,   // every test starts already logged in
       },
     },
