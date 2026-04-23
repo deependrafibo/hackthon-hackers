@@ -1,46 +1,118 @@
-/**
- * Copyright (c) Microsoft Corporation.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type Project } from '@playwright/test';
 import path from 'path';
 import dotenv from 'dotenv';
+import { discoverSites, type SiteConfig } from './utils/siteDiscovery';
 
-// Load .env from project root so TEST_EMAIL / TEST_PASSWORD are available
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const AUTH_FILE = path.join(__dirname, '.auth/session.json');
+const sites = discoverSites();
+
+function resolveRunId(): string {
+  if (process.env.TEST_RUN_ID?.trim())
+    return process.env.TEST_RUN_ID.trim();
+  return `run-${new Date().toISOString().replace(/[:.]/g, '-')}-${process.pid}`;
+}
+
+function normalizeAuthorizationHeader(rawToken: string): string {
+  const token = rawToken.trim();
+  if (!token)
+    return '';
+  return /^Bearer\s+/i.test(token) ? token : `Bearer ${token}`;
+}
+
+const runId = resolveRunId();
+const runFolder = path.join('test-results', runId);
+const jsonOutputFile = path.join(runFolder, 'results.json');
+const rawHeader = process.env.AUTHORIZATION_HEADER || process.env.API_TOKEN || '';
+const authorizationHeader = rawHeader ? normalizeAuthorizationHeader(rawHeader) : '';
+
+function buildProjectsForSite(site: SiteConfig): Project[] {
+  const authFile = path.join(__dirname, `.auth/${site.name}-session.json`);
+  const projects: Project[] = [];
+
+  const setupName = `${site.name}-setup`;
+  projects.push({
+    name: setupName,
+    testMatch: site.hasCustomAuth
+      ? `**/${site.name}/auth.setup.ts`
+      : '**/_generic/auth.setup.ts',
+    use: {
+      ...devices['Desktop Chrome'],
+      baseURL: site.baseURL,
+    },
+  });
+
+  const publicTestMatch: string[] = ['**/_generic/**/*.spec.ts'];
+  const publicTestIgnore: string[] = ['**/_generic/auth.setup.ts'];
+
+  if (site.hasCustomTests) {
+    publicTestMatch.push(`**/${site.name}/**/*.spec.ts`);
+    publicTestIgnore.push(`**/${site.name}/authenticated/**/*.spec.ts`);
+    publicTestIgnore.push(`**/${site.name}/auth.setup.ts`);
+  }
+
+  projects.push({
+    name: `${site.name}-public`,
+    testMatch: publicTestMatch,
+    testIgnore: publicTestIgnore,
+    use: {
+      ...devices['Desktop Chrome'],
+      baseURL: site.baseURL,
+    },
+  });
+
+  const authenticatedMatch: string[] = [];
+  if (site.hasCustomTests)
+    authenticatedMatch.push(`**/${site.name}/authenticated/**/*.spec.ts`);
+
+  if (authenticatedMatch.length) {
+    projects.push({
+      name: `${site.name}-authenticated`,
+      testMatch: authenticatedMatch,
+      dependencies: [setupName],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: site.baseURL,
+        storageState: authFile,
+      },
+    });
+  }
+
+  return projects;
+}
+
+const dynamicProjects = sites.flatMap(buildProjectsForSite);
+
+if (!dynamicProjects.length) {
+  console.warn('[config] No sites discovered from env vars (*_BASE_URL). Check your .env file.');
+}
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
+  globalSetup: require.resolve('./global.setup'),
   forbidOnly: !!process.env.CI,
   workers: 1,
   timeout: 90000,
   reporter: [
     ['list'],
-    ['json', { outputFile: 'test-results/results.json' }],
+    ['html', { open: 'never', outputFolder: path.join(runFolder, 'html-report') }],
+    ['json', { outputFile: jsonOutputFile }],
+    [path.resolve(__dirname, './reporters/priorityResultReporter.ts')],
   ],
   maxFailures: process.env.CI ? 1 : 0,
   use: {
+    channel: 'chrome',
     headless: true,
     screenshot: 'on',
+    trace: 'retain-on-failure',
     video: 'off',
     navigationTimeout: 60000,
     actionTimeout: 15000,
+    extraHTTPHeaders: authorizationHeader ? { Authorization: authorizationHeader } : undefined,
   },
+  outputDir: path.join(runFolder, 'artifacts'),
+  projects: dynamicProjects,
   projects: [
     // 1. Run login once and save the session
     {

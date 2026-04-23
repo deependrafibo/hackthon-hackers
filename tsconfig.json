@@ -10,5 +10,12 @@
     "outDir": "dist",
     "skipLibCheck": true
   },
-  "include": ["tests/**/*.ts", "playwright.config.ts"]
+  "include": [
+    "tests/**/*.ts",
+    "utils/**/*.ts",
+    "reporters/**/*.ts",
+    "server/**/*.ts",
+    "global.setup.ts",
+    "playwright.config.ts"
+  ]
 }
