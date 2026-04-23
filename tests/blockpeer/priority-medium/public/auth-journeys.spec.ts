@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.BLOCKPEER_BASE_URL || process.env.BASE_URL || 'https://staging-react.blockpeer.finance/';
+const BASE_URL = (process.env.BLOCKPEER_BASE_URL || process.env.BASE_URL || 'https://staging-react.blockpeer.finance').replace(/\/+$/, '');
 
 test.describe('Blockpeer Signup Journey @api:auth @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}auth/signup`);
+    await page.goto(`${BASE_URL}/auth/signup`);
   });
 
   test('signup heading is visible', async ({ page }) => {
@@ -23,18 +23,18 @@ test.describe('Blockpeer Signup Journey @api:auth @priority:medium', () => {
 
   test('empty form submit keeps user on signup', async ({ page }) => {
     await page.getByRole('button', { name: 'Create Account' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signup`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signup`);
   });
 
   test('sign in link returns to signin', async ({ page }) => {
     await page.getByRole('link', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signin`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
   });
 });
 
 test.describe('Blockpeer Forgot Password Journey @api:auth @priority:medium', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}auth/forgot-password`);
+    await page.goto(`${BASE_URL}/auth/forgot-password`);
   });
 
   test('forgot password heading is visible', async ({ page }) => {
@@ -54,20 +54,20 @@ test.describe('Blockpeer Forgot Password Journey @api:auth @priority:medium', ()
 
   test('sign in link navigates back to signin', async ({ page }) => {
     await page.getByRole('link', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signin`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
   });
 });
 
 test.describe('Blockpeer Cross Auth Navigation @api:navigation @priority:medium', () => {
   test('logo from signin returns to signin', async ({ page }) => {
-    await page.goto(`${BASE_URL}auth/signin`);
+    await page.goto(`${BASE_URL}/auth/signin`);
     await page.getByRole('link', { name: /BlockPeer Logo/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signin`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
   });
 
   test('logo from signup redirects to signin via root', async ({ page }) => {
-    await page.goto(`${BASE_URL}auth/signup`);
+    await page.goto(`${BASE_URL}/auth/signup`);
     await page.getByRole('link', { name: /BlockPeer Logo/i }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signin`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
   });
 });

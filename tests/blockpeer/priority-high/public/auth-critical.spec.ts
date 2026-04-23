@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 
-const BASE_URL = process.env.BLOCKPEER_BASE_URL || process.env.BASE_URL || 'https://staging-react.blockpeer.finance/';
+const BASE_URL = (process.env.BLOCKPEER_BASE_URL || process.env.BASE_URL || 'https://staging-react.blockpeer.finance').replace(/\/+$/, '');
 
 test.describe('Blockpeer Login Critical @api:auth @priority:high', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto(`${BASE_URL}auth/signin`);
+    await page.goto(`${BASE_URL}/auth/signin`);
   });
 
   test('signin page title is correct', async ({ page }) => {
@@ -48,14 +48,14 @@ test.describe('Blockpeer Login Critical @api:auth @priority:high', () => {
 
   test('empty login submit keeps user on signin', async ({ page }) => {
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signin`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
   });
 
   test('invalid email login attempt stays on signin', async ({ page }) => {
     await page.getByPlaceholder('m@example.com').fill('not-an-email');
     await page.getByPlaceholder('**********').fill('randompass123');
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page).toHaveURL(`${BASE_URL}auth/signin`);
+    await expect(page).toHaveURL(`${BASE_URL}/auth/signin`);
   });
 
   test('keep me signed in checkbox toggles', async ({ page }) => {
