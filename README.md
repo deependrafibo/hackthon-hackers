@@ -2,6 +2,49 @@
 
 Playwright CLI with SKILLS
 
+## Running Tests & Viewing Reports
+
+### Setup
+
+Add your site credentials to `.env`:
+
+```env
+MYSITE_BASE_URL=https://mysite.com
+MYSITE_EMAIL=your-email@example.com
+MYSITE_PASSWORD=your-password
+BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
+```
+
+### Run tests for a site
+
+```bash
+npx playwright test --project=mysite-public
+```
+
+Replace `mysite` with your site name (e.g. `crickbox`, `blockpeer`).
+
+### Upload results to Report Viewer
+
+```bash
+node scripts/generate-json-report.mjs
+```
+
+### Run tests and upload in one command
+
+```bash
+npx playwright test --project=mysite-public && node scripts/generate-json-report.mjs
+```
+
+Results will appear on the [Report Viewer](https://report-viewer-delta.vercel.app) automatically after upload.
+
+### Adding a new site
+
+1. Add `NEWSITE_BASE_URL`, `NEWSITE_EMAIL`, `NEWSITE_PASSWORD` to `.env`
+2. Add test files under `tests/newsite/`
+3. Run `npx playwright test --project=newsite-public && node scripts/generate-json-report.mjs`
+
+No other configuration needed — sites are discovered automatically from `.env`.
+
 ### Playwright CLI vs Playwright MCP
 
 This package provides CLI interface into Playwright. If you are using **coding agents**, that is the best fit.
