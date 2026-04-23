@@ -15,7 +15,9 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test",
+    "report": "node scripts/generate-json-report.mjs",
+    "test:report": "playwright test && node scripts/generate-json-report.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
@@ -24,6 +26,7 @@
     "typescript": "^6.0.2"
   },
   "dependencies": {
+    "@vercel/blob": "^2.3.3",
     "minimist": "^1.2.5",
     "playwright": "1.60.0-alpha-1775584683000"
   },
