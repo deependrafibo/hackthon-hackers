@@ -15,8 +15,13 @@
 
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import minimist from 'minimist';
 import { put } from '@vercel/blob';
+import dotenv from 'dotenv';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
 
 const argv = minimist(process.argv.slice(2), {
   string: ['site', 'run-id'],
