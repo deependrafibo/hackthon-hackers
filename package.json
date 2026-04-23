@@ -35,6 +35,8 @@
     "report:dev": "cd report-viewer && npm run dev",
     "report:build": "cd report-viewer && npm run build",
     "report:start": "cd report-viewer && npm run start"
+    "report": "node scripts/generate-json-report.mjs",
+    "test:report": "playwright test && node scripts/generate-json-report.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
@@ -49,6 +51,7 @@
   "dependencies": {
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "@vercel/blob": "^2.3.3",
     "minimist": "^1.2.5",
     "playwright": "1.60.0-alpha-1775584683000"
   },

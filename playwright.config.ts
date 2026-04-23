@@ -113,4 +113,31 @@ export default defineConfig({
   },
   outputDir: path.join(runFolder, 'artifacts'),
   projects: dynamicProjects,
+  projects: [
+    // 1. Run login once and save the session
+    {
+      name: 'setup',
+      testMatch: '**/auth.setup.ts',
+      use: { channel: 'chrome'},
+    },
+
+    // 2. Public pages (login / signup) — no auth needed
+    {
+      name: 'public',
+      testMatch: '**/etrade.spec.ts',
+      use: { ...devices['Desktop Chrome'], channel: 'msedge' },
+    },
+
+    // 3. Authenticated pages — depends on setup finishing first
+    {
+      name: 'authenticated',
+      testMatch: '**/etrade-authenticated.spec.ts',
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: 'msedge',
+        storageState: AUTH_FILE,   // every test starts already logged in
+      },
+    },
+  ],
 });
