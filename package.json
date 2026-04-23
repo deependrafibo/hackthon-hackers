@@ -28,16 +28,27 @@
     "test:show": "npx playwright show-report test-results/$(ls -t test-results | head -1)/html-report",
     "graph:build": "source .venv/bin/activate && graphify update .",
     "graph:view": "open graphify-out/graph.html",
-    "graph:query": "source .venv/bin/activate && graphify query"
+    "graph:query": "source .venv/bin/activate && graphify query",
+    "server": "npx tsx server/index.ts",
+    "server:dev": "npx tsx watch server/index.ts",
+    "dev": "npx tsx watch server/index.ts & cd ../report-viewer && npm run dev",
+    "report:dev": "cd report-viewer && npm run dev",
+    "report:build": "cd report-viewer && npm run build",
+    "report:start": "cd report-viewer && npm run start"
   },
   "devDependencies": {
     "@playwright/test": "1.60.0-alpha-1775584683000",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
     "@types/node": "^25.2.1",
     "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
   },
   "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
     "minimist": "^1.2.5",
     "playwright": "1.60.0-alpha-1775584683000"
   },
