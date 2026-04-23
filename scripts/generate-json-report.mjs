@@ -124,9 +124,11 @@ function walkSuites(suites, suiteChain, out) {
  */
 function deriveSiteName(results) {
   const project = results.find(
-    (r) => r.projectName && r.projectName !== 'setup',
+    (r) => r.projectName && !r.projectName.endsWith('-setup'),
   )?.projectName;
-  return project || 'unknown-site';
+  if (!project) return 'unknown-site';
+  // strip suffixes like -public, -authenticated, -setup
+  return project.replace(/-(public|authenticated|setup)$/, '');
 }
 
 async function main() {
