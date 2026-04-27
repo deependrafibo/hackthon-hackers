@@ -21,6 +21,8 @@ function normalizeAuthorizationHeader(rawToken: string): string {
 }
 
 const runId = resolveRunId();
+// Share the runId with the reporter so both write to the same folder
+process.env.TEST_RUN_ID = runId;
 const runFolder = path.join('test-results', runId);
 const jsonOutputFile = path.join(runFolder, 'results.json');
 const rawHeader = process.env.AUTHORIZATION_HEADER || process.env.API_TOKEN || '';
