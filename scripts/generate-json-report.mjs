@@ -131,66 +131,150 @@ function deriveSiteName(results) {
   return project.replace(/-(public|authenticated|setup)$/, '');
 }
 
-async function main() {
-  const inputFile = path.resolve(process.cwd(), 'test-results', 'results.json');
+const NON_SITE_FOLDERS = new Set(['artifacts', 'html-report', 'screenshots', 'auth']);
 
-  let raw;
+/**
+ * Returns true if a directory looks like a real site folder
+ * (contains full_result.json, passed.json, or failed.json).
+ */
+async function isSiteDir(dirPath) {
+  for (const file of ['full_result.json', 'passed.json', 'failed.json']) {
+    try {
+      await fs.access(path.join(dirPath, file));
+      return true;
+    } catch { /* not found */ }
+  }
+  return false;
+}
+
+/**
+ * Finds the most recent run-* folder that contains at least one site folder with report data.
+ * Returns { runId, runDir } or null if none found.
+ */
+async function findLatestRun(testResultsDir) {
+  let entries;
   try {
-    raw = await fs.readFile(inputFile, 'utf-8');
+    entries = await fs.readdir(testResultsDir, { withFileTypes: true });
   } catch {
-    console.error(`[json-report] results.json not found at ${inputFile} — skipping`);
+    return null;
+  }
+
+  const runDirs = entries
+    .filter((e) => e.isDirectory() && e.name.startsWith('run-'))
+    .map((e) => e.name)
+    .sort()
+    .reverse(); // newest first
+
+  for (const name of runDirs) {
+    const runDir = path.join(testResultsDir, name);
+    const children = await fs.readdir(runDir, { withFileTypes: true });
+    for (const child of children) {
+      if (!child.isDirectory()) continue;
+      if (NON_SITE_FOLDERS.has(child.name)) continue;
+      if (await isSiteDir(path.join(runDir, child.name))) {
+        return { runId: name, runDir };
+      }
+    }
+  }
+
+  return null;
+}
+
+async function main() {
+  const testResultsDir = path.resolve(process.cwd(), 'test-results');
+
+  // Resolve which run folder to use
+  let resolvedRunId = argv['run-id'] || process.env.TEST_RUN_ID || '';
+  let runDir;
+
+  if (resolvedRunId) {
+    runDir = path.join(testResultsDir, resolvedRunId);
+  } else {
+    const latest = await findLatestRun(testResultsDir);
+    if (!latest) {
+      console.error('[json-report] No run-* folders found in test-results/ — run npm test first');
+      process.exit(1);
+    }
+    resolvedRunId = latest.runId;
+    runDir = latest.runDir;
+    console.log(`[json-report] Auto-detected latest run: ${resolvedRunId}`);
+  }
+
+  // The priorityResultReporter already writes structured JSONs per site.
+  // Find all site sub-folders and upload them.
+  let siteEntries;
+  try {
+    siteEntries = await fs.readdir(runDir, { withFileTypes: true });
+  } catch {
+    console.error(`[json-report] Run folder not found: ${runDir}`);
+    process.exit(1);
+  }
+
+  const siteDirs = siteEntries.filter(
+    (e) => e.isDirectory() && !NON_SITE_FOLDERS.has(e.name),
+  );
+
+  if (!siteDirs.length) {
+    console.warn('[json-report] No site folders found inside run folder — tests may not have completed');
     process.exit(0);
   }
 
-  const playwrightReport = JSON.parse(raw);
-  const results = [];
-  walkSuites(playwrightReport.suites || [], [], results);
+  for (const siteEntry of siteDirs) {
+    const siteName = siteEntry.name;
+    const siteDir = path.join(runDir, siteName);
 
-  if (!results.length) {
-    console.warn('[json-report] No test results found in results.json');
-  }
-
-  const siteName = argSite || deriveSiteName(results);
-
-  // Stamp every result with the resolved site name
-  for (const r of results) {
-    r.websiteName = siteName;
-    r.website = siteName;
-  }
-
-  const outDir = path.resolve(process.cwd(), 'test-results', runId, siteName);
-  await fs.mkdir(outDir, { recursive: true });
-
-  const passed = results.filter((r) => r.outcome === 'passed');
-  const failed = results.filter((r) => r.outcome === 'failed');
-
-  await fs.writeFile(path.join(outDir, 'full_result.json'), JSON.stringify(results, null, 2));
-  await fs.writeFile(path.join(outDir, 'passed.json'), JSON.stringify(passed, null, 2));
-  await fs.writeFile(path.join(outDir, 'failed.json'), JSON.stringify(failed, null, 2));
-
-  console.log(
-    `[json-report] site=${siteName} runId=${runId}` +
-    ` — ${results.length} results (${passed.length} passed, ${failed.length} failed)` +
-    ` → ${outDir}`,
-  );
-
-  // Upload to Vercel Blob when token is available
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
-    console.log('[json-report] Uploading to Vercel Blob…');
-    const blobPrefix = `report-viewer/runs/${runId}/${siteName}`;
-    const uploads = [
-      ['full_result.json', results],
-      ['passed.json', passed],
-      ['failed.json', failed],
-    ];
-    for (const [file, data] of uploads) {
-      await put(`${blobPrefix}/${file}`, JSON.stringify(data), {
-        access: 'public',
-        contentType: 'application/json',
-        addRandomSuffix: false,
-      });
+    // Read the already-generated structured JSONs
+    let fullResults = [];
+    try {
+      const raw = await fs.readFile(path.join(siteDir, 'full_result.json'), 'utf-8');
+      fullResults = JSON.parse(raw);
+    } catch {
+      // full_result.json not present — parse from results.json if available
+      const resultsJsonPath = path.join(runDir, 'results.json');
+      try {
+        const raw = await fs.readFile(resultsJsonPath, 'utf-8');
+        const playwrightReport = JSON.parse(raw);
+        walkSuites(playwrightReport.suites || [], [], fullResults);
+        const resolvedSite = argSite || deriveSiteName(fullResults);
+        for (const r of fullResults) { r.websiteName = resolvedSite; r.website = resolvedSite; }
+      } catch {
+        console.warn(`[json-report] Skipping site "${siteName}" — no full_result.json or results.json`);
+        continue;
+      }
     }
-    console.log(`[json-report] Uploaded to Blob → ${blobPrefix}/`);
+
+    const passed = fullResults.filter((r) => r.outcome === 'passed');
+    const failed = fullResults.filter((r) => r.outcome === 'failed');
+
+    // Ensure structured JSONs exist on disk
+    await fs.writeFile(path.join(siteDir, 'full_result.json'), JSON.stringify(fullResults, null, 2));
+    await fs.writeFile(path.join(siteDir, 'passed.json'), JSON.stringify(passed, null, 2));
+    await fs.writeFile(path.join(siteDir, 'failed.json'), JSON.stringify(failed, null, 2));
+
+    console.log(
+      `[json-report] site=${siteName} runId=${resolvedRunId}` +
+      ` — ${fullResults.length} results (${passed.length} passed, ${failed.length} failed)` +
+      ` → ${siteDir}`,
+    );
+
+    // Upload to Vercel Blob when token is available
+    if (process.env.BLOB_READ_WRITE_TOKEN) {
+      console.log(`[json-report] Uploading ${siteName} to Vercel Blob…`);
+      const blobPrefix = `report-viewer/runs/${resolvedRunId}/${siteName}`;
+      const uploads = [
+        ['full_result.json', fullResults],
+        ['passed.json', passed],
+        ['failed.json', failed],
+      ];
+      for (const [file, data] of uploads) {
+        await put(`${blobPrefix}/${file}`, JSON.stringify(data), {
+          access: 'public',
+          contentType: 'application/json',
+          addRandomSuffix: false,
+        });
+      }
+      console.log(`[json-report] Uploaded to Blob → ${blobPrefix}/`);
+    }
   }
 }
 
