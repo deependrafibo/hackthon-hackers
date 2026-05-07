@@ -3,7 +3,10 @@ import path from 'path';
 
 export const AUTH_FILE = path.join(__dirname, '../../.auth/blockpeer-session.json');
 
-const BASE_URL = (process.env.BLOCKPEER_BASE_URL || process.env.BASE_URL || 'https://staging-react.blockpeer.finance').replace(/\/+$/, '');
+const BASE_URL = (process.env.BLOCKPEER_BASE_URL || process.env.BASE_URL || '').replace(/\/+$/, '');
+if (!BASE_URL) {
+  throw new Error('BLOCKPEER_BASE_URL (or BASE_URL) must be set in your .env file.');
+}
 const EMAIL = process.env.BLOCKPEER_EMAIL || process.env.TEST_EMAIL || '';
 const PASSWORD = process.env.BLOCKPEER_PASSWORD || process.env.TEST_PASSWORD || '';
 
